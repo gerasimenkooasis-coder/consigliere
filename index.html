@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0b1020">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Консильери">
+<link rel="manifest" href="manifest.json">
+<title>Консильери</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",Arial,sans-serif;color:#f7f8fb;background:#080b14}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:radial-gradient(circle at 50% -10%,#24345f 0,#0b1020 42%,#070910 100%);min-height:100vh}
+.app{max-width:760px;margin:auto;padding:env(safe-area-inset-top) 16px calc(28px + env(safe-area-inset-bottom))}
+header{padding:18px 4px 10px;display:flex;align-items:center;justify-content:space-between}
+.brand{font-weight:800;font-size:24px;letter-spacing:-.6px}.sub{color:#aab2c7;font-size:12px;margin-top:3px}
+.badge{font-size:11px;color:#cdd5ff;background:#1b2545;border:1px solid #34416c;padding:7px 10px;border-radius:999px}
+.card{background:rgba(19,24,39,.88);border:1px solid #283149;border-radius:22px;padding:18px;margin:10px 0;box-shadow:0 12px 30px rgba(0,0,0,.22)}
+h1{font-size:28px;line-height:1.05;margin:2px 0 10px;letter-spacing:-.9px}
+h2{font-size:18px;margin:0 0 10px}.muted{color:#9da7bd}.small{font-size:12px}
+textarea,input,select{width:100%;border:1px solid #303b57;background:#0d1322;color:#fff;border-radius:15px;padding:14px;font:inherit;outline:none}
+textarea{min-height:92px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.full{grid-column:1/-1}
+label{display:block;font-size:12px;color:#b7bfd0;margin:12px 2px 7px}
+.range{display:flex;align-items:center;gap:12px}.range input{padding:0;border:0;background:transparent}.val{min-width:38px;text-align:right;font-weight:700}
+button{width:100%;border:0;border-radius:16px;padding:15px 16px;font:700 16px inherit;color:white;background:linear-gradient(135deg,#6d7cff,#8d5cf6);box-shadow:0 8px 20px rgba(111,103,255,.22)}
+button.secondary{background:#182038;border:1px solid #303b57;box-shadow:none;margin-top:9px}
+button.ghost{background:transparent;border:1px solid #303b57;box-shadow:none}
+.option{display:flex;gap:10px;margin:9px 0}.option input{width:auto}.option input+div{flex:1}
+.verdict{font-size:26px;font-weight:800;margin:4px 0 6px}.good{color:#83e6a9}.warn{color:#ffd27d}.bad{color:#ff9eac}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.metric{background:#0d1322;border:1px solid #27324b;border-radius:15px;padding:12px}.metric b{display:block;font-size:20px;margin-top:4px}
+#result{display:none}.bar{height:8px;background:#252e45;border-radius:99px;overflow:hidden;margin-top:8px}.bar i{display:block;height:100%;background:#7d7cf7;border-radius:99px}
+footer{text-align:center;color:#707a91;font-size:11px;padding:14px 0}
+@media(max-width:420px){.row{grid-template-columns:1fr}.full{grid-column:auto}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div><div class="brand">Консильери</div><div class="sub">личный помощник для решений</div></div><div class="badge">iPhone</div></header>
+
+<section class="card">
+<h1>Стоит ли мне это делать?</h1>
+<p class="muted">Опиши ситуацию. Я помогу отделить факты от предположений и проверить решение несколькими способами.</p>
+<label>Что ты собираешься решить?</label>
+<textarea id="situation" placeholder="Например: стоит ли принимать новое предложение о работе?"></textarea>
+<div class="row">
+<div><label>Цель</label><input id="goal" placeholder="Что хочу получить"></div>
+<div><label>Срок</label><input id="deadline" type="date"></div>
+</div>
+</section>
+
+<section class="card">
+<h2>Варианты</h2>
+<div id="opts">
+<div class="option"><input type="radio" name="choice" checked><div><input value="Сделать / выбрать вариант A"></div></div>
+<div class="option"><input type="radio" name="choice"><div><input value="Не делать / оставить как есть"></div></div>
+</div>
+<button class="secondary" onclick="addOption()">+ Добавить вариант</button>
+</section>
+
+<section class="card">
+<h2>Насколько ты уверен?</h2>
+<div class="row">
+<div><label>Польза решения</label><div class="range"><input id="benefit" type="range" min="0" max="100" value="70" oninput="sync(this)"><span class="val">70</span></div></div>
+<div><label>Риск потерь</label><div class="range"><input id="risk" type="range" min="0" max="100" value="40" oninput="sync(this)"><span class="val">40</span></div></div>
+<div><label>Неопределённость</label><div class="range"><input id="unc" type="range" min="0" max="100" value="45" oninput="sync(this)"><span class="val">45</span></div></div>
+<div><label>Обратимость</label><div class="range"><input id="rev" type="range" min="0" max="100" value="60" oninput="sync(this)"><span class="val">60</span></div></div>
+</div>
+<label>Что может пойти не так?</label><textarea id="risks" placeholder="Главные опасения, неизвестные, возможные последствия"></textarea>
+</section>
+
+<section class="card">
+<h2>Режим анализа</h2>
+<select id="mode">
+<option value="balanced">Сбалансированный</option>
+<option value="robust">Осторожный — важнее избежать плохого исхода</option>
+<option value="upside">Амбициозный — важнее потенциальная выгода</option>
+<option value="regret">Минимизация сожаления</option>
+</select>
+<label><input id="safety" type="checkbox"> Решение связано с медициной, правом, крупными деньгами или безопасностью</label>
+</section>
+
+<button onclick="decide()">Проанализировать решение</button>
+
+<section class="card" id="result">
+<div class="small muted">РЕЗУЛЬТАТ</div>
+<div id="verdict" class="verdict"></div>
+<div id="reason" class="muted"></div>
+<div class="grid" style="margin-top:14px">
+<div class="metric">Оценка пользы<b id="mBenefit"></b></div>
+<div class="metric">Риск<b id="mRisk"></b></div>
+<div class="metric">Неопределённость<b id="mUnc"></b></div>
+<div class="metric">Уверенность<b id="mConf"></b></div>
+</div>
+<div style="margin-top:15px"><b>Что сильнее всего влияет</b><div id="drivers" class="muted small" style="margin-top:7px"></div></div>
+<div style="margin-top:15px"><b>Следующий шаг</b><p id="next" class="muted"></p></div>
+<div id="safetyNote" class="small warn"></div>
+<button class="secondary" onclick="saveDecision()">Сохранить в историю</button>
+<button class="ghost" onclick="resetForm()">Новое решение</button>
+</section>
+
+<section class="card">
+<h2>История</h2>
+<div id="history" class="muted small">Пока нет сохранённых решений.</div>
+<button class="secondary" onclick="clearHistory()">Очистить историю</button>
+</section>
+<footer>Консильери работает локально в браузере. Не вводи пароли, номера карт и другие секреты.</footer>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+function sync(x){x.nextElementSibling.textContent=x.value}
+function addOption(){let d=document.createElement('div');d.className='option';d.innerHTML='<input type="radio" name="choice"><div><input placeholder="Новый вариант"></div>'; $('opts').appendChild(d)}
+function data(){
+ let opts=[...document.querySelectorAll('#opts .option input[type=text],#opts .option div input')].map(x=>x.value.trim()).filter(Boolean);
+ return {situation:$('situation').value.trim(),goal:$('goal').value.trim(),deadline:$('deadline').value,
+ opts,benefit:+$('benefit').value,risk:+$('risk').value,unc:+$('unc').value,rev:+$('rev').value,risks:$('risks').value.trim(),mode:$('mode').value,safety:$('safety').checked}
+}
+function decide(){
+ const v=data(); if(!v.situation){alert('Опиши ситуацию.');return}
+ let score=v.benefit*.45+(100-v.risk)*.30+v.rev*.10+(100-v.unc)*.15;
+ let verdict,cls,reason,next;
+ if(v.safety && v.unc>=55){verdict='CHECK';cls='warn';reason='Слишком много неопределённости для решения с повышенной ценой ошибки.';next='Проверь критический факт или получи консультацию профильного специалиста до действия.'}
+ else if(score>=70){verdict='DA — действовать';cls='good';reason='Потенциальная польза сейчас заметно превышает оценённый риск и неопределённость.';next='Сделай первый обратимый шаг и задай точку пересмотра.'}
+ else if(score>=55){verdict='SMALL TEST — малый тест';cls='warn';reason='Сигнал положительный, но данных недостаточно для уверенного полного шага.';next='Проведи небольшой эксперимент с ограниченным бюджетом/сроком и измеримым результатом.'}
+ else if(v.unc>=65){verdict='WAIT — подождать';cls='warn';reason='Решение слишком чувствительно к неизвестным данным.';next='Сначала собери информацию, которая сильнее всего изменит выбор.'}
+ else {verdict='NET — не сейчас';cls='bad';reason='При текущих вводных риск и цена ошибки перевешивают ожидаемую пользу.';next='Измени условия или выбери альтернативу.'}
+ if(v.mode==='robust' && v.risk>60 && verdict==='DA — действовать'){verdict='SMALL TEST — осторожный старт';cls='warn';reason='Осторожный режим снижает допустимый уровень риска.'}
+ if(v.mode==='upside' && v.benefit>75 && v.risk<55 && v.unc<65){verdict='DA — действовать';cls='good'}
+ $('verdict').textContent=verdict;$('verdict').className='verdict '+cls;$('reason').textContent=reason;
+ $('mBenefit').textContent=v.benefit+'%';$('mRisk').textContent=v.risk+'%';$('mUnc').textContent=v.unc+'%';$('mConf').textContent=Math.round((100-v.unc)*.7+v.rev*.3)+'%';
+ let drivers=[]; if(v.unc>55)drivers.push('неопределённость'); if(v.risk>50)drivers.push('риск'); if(v.benefit>70)drivers.push('потенциальная польза'); if(v.rev<45)drivers.push('трудность отката'); $('drivers').textContent=drivers.length?drivers.join(', '):'явного доминирующего фактора нет';
+ $('next').textContent=next;$('safetyNote').textContent=v.safety?'Для высокорискового решения это аналитическая подсказка, а не замена врачу, юристу или финансовому советнику.':'';
+ $('result').style.display='block';$('result').scrollIntoView({behavior:'smooth'});window.last=v;
+}
+function saveDecision(){
+ if(!window.last)return; let h=JSON.parse(localStorage.getItem('ciphone_history')||'[]');
+ h.unshift({date:new Date().toLocaleString('ru-RU'),...window.last,verdict:$('verdict').textContent});h=h.slice(0,30);localStorage.setItem('ciphone_history',JSON.stringify(h));renderHistory();
+}
+function renderHistory(){let h=JSON.parse(localStorage.getItem('ciphone_history')||'[]');$('history').innerHTML=h.length?h.map(x=>'<div style="padding:10px 0;border-bottom:1px solid #273149"><b>'+esc(x.verdict)+'</b><br>'+esc(x.situation)+'<br><span class="muted">'+esc(x.date)+'</span></div>').join(''):'Пока нет сохранённых решений.'}
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function clearHistory(){if(confirm('Удалить историю?')){localStorage.removeItem('ciphone_history');renderHistory()}}
+function resetForm(){$('result').style.display='none';scrollTo({top:0,behavior:'smooth'})}
+renderHistory();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body></html>
